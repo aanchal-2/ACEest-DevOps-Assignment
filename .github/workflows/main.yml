@@ -1,6 +1,6 @@
 name: ACEest Fitness CI
  
-on:
+'on':
   push:
   pull_request:
  
