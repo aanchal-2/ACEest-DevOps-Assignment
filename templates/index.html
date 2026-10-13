@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACEest Functional Fitness</title>
+<style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #191919; color: #eee;
+                font-family: Arial, sans-serif; }
+        header { background: #d4af37; color: #111; text-align: center;
+                  padding: 22px 12px; font-weight: bold; font-size: 26px; }
+        .layout { max-width: 1100px; margin: 22px auto; padding: 0 15px;
+                   display: grid; grid-template-columns: 250px minmax(0,1fr);
+                   gap: 20px; align-items: start; }
+        .panel { background: #242424; border: 1px solid #383838;
+                  border-top: 3px solid #d4af37; border-radius: 6px; padding: 20px; }
+        h2, h3, h4 { color: #d4af37; }
+        h3 { margin-top: 0; }
+        label { display: block; margin: 16px 0 8px; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; background: #333;
+                         color: white; border: 1px solid #777; border-radius: 4px;
+                         margin-bottom: 8px; }
+        button { width: 100%; padding: 11px; background: #d4af37; color: #111;
+                  border: 0; border-radius: 4px; font-weight: bold; cursor: pointer;
+                  margin: 5px 0; }
+        button:hover { background: #edc94b; }
+        .metrics { margin-top: 35px; padding: 14px; background: #303030; }
+        .metrics p { font-size: 12px; line-height: 1.6; }
+        .main-panel { min-height: 170px; }
+        .section { margin-top: 22px; border-top: 1px solid #444; padding-top: 10px; }
+        li { margin: 7px 0; line-height: 1.5; }
+        .message { min-height: 20px; color: #e6cf75; }
+        footer { text-align: center; color: #aaa; padding: 30px 12px; font-size: 13px; }
+        @media (max-width: 680px) {
+            .layout { grid-template-columns: 1fr; }
+            header { font-size: 21px; }
+        }
+</style>
+</head>
+<body>
+<header>ACEest FUNCTIONAL FITNESS</header>
+<div class="layout">
+<aside class="panel">
+<h3>Client Profile</h3>
+<form id="client-form">
+<label for="client-name">Register Client</label>
+<input id="client-name" name="name" placeholder="Client name" required>
+<button type="submit">Add Client</button>
+</form>
+<label for="program">Select Program:</label>
+<select id="program">
+<option value="">Choose a program</option>
+            {% for program in programs %}
+<option value="{{ program }}">{{ program }}</option>
+            {% endfor %}
+</select>
+<button id="view-program" type="button">View Program</button>
+<div class="metrics">
+<h4>GYM METRICS</h4>
+<p>CAPACITY: 150 Users</p>
+<p>AREA: 10,000 sq ft</p>
+<p>BREAK-EVEN: 250 Members</p>
+</div>
+</aside>
+<main>
+<section class="panel main-panel" id="program-content">
+<h3>Welcome to ACEest Fitness &amp; Gym</h3>
+<p>Select a fitness program to view its workout schedule and nutrition plan.</p>
+</section>
+<section class="panel section">
+<h3>Registered Clients</h3><ul id="clients"></ul>
+</section>
+<section class="panel section">
+<h3>Record a Workout</h3>
+<form id="workout-form">
+<label for="client-id">Client</label>
+<select id="client-id" required><option value="">Select a client</option></select>
+<label for="workout-type">Workout type</label>
+<input id="workout-type" required placeholder="e.g. Cardio">
+<label for="duration">Duration in minutes</label>
+<input id="duration" type="number" min="1" required>
+<button type="submit">Save Workout</button>
+</form>
+</section>
+<section class="panel section">
+<h3>Workout Records</h3><ul id="workouts"></ul>
+</section>
+<p id="message" class="message" role="status"></p>
+</main>
+</div>
+<footer>ACEest Fitness &amp; Gym · Fitness for every goal</footer>
+<script>
+const message = document.getElementById("message");
+async function api(url, options = {}) {
+    const response = await fetch(url, {
+        ...options,
+        headers: {"Content-Type": "application/json", ...(options.headers || {})}
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Request failed");
+    return data;
+}
+function addTextItem(list, text) {
+    const li = document.createElement("li");
+    li.textContent = text;
+    list.appendChild(li);
+}
+async function loadClients() {
+    const clients = await api("/clients");
+    const list = document.getElementById("clients");
+    const select = document.getElementById("client-id");
+    list.replaceChildren();
+    select.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a client";
+    select.appendChild(placeholder);
+    clients.forEach(client => {
+        addTextItem(list, `${client.id}: ${client.name} (${client.membership_status})`);
+        const option = document.createElement("option");
+        option.value = client.id;
+        option.textContent = `${client.id}: ${client.name}`;
+        select.appendChild(option);
+    });
+}
+async function loadWorkouts() {
+    const workouts = await api("/workouts");
+    const list = document.getElementById("workouts");
+    list.replaceChildren();
+    workouts.forEach(w => addTextItem(
+        list, `${w.client_name}: ${w.workout_type} - ${w.duration_min} minutes`
+    ));
+}
+document.getElementById("view-program").addEventListener("click", async () => {
+    const name = document.getElementById("program").value;
+    const panel = document.getElementById("program-content");
+    if (!name) { message.textContent = "Please select a fitness program."; return; }
+    try {
+        const data = await api("/program/" + encodeURIComponent(name));
+        panel.replaceChildren();
+        const heading = document.createElement("h3");
+        heading.textContent = data.name + " Program";
+        panel.appendChild(heading);
+        for (const [title, items] of [
+            ["Workout Schedule", data.workouts], ["Nutrition Plan", data.nutrition]
+        ]) {
+            const h = document.createElement("h4");
+            h.textContent = title;
+            panel.appendChild(h);
+            const ul = document.createElement("ul");
+            items.forEach(item => addTextItem(ul, item));
+            panel.appendChild(ul);
+        }
+        message.textContent = "";
+    } catch (error) { message.textContent = error.message; }
+});
+document.getElementById("client-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    try {
+        await api("/clients", {method: "POST", body: JSON.stringify({
+            name: document.getElementById("client-name").value
+        })});
+        e.target.reset();
+        await loadClients();
+        message.textContent = "Client registered successfully.";
+    } catch (error) { message.textContent = error.message; }
+});
+document.getElementById("workout-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    try {
+        await api("/workouts", {method: "POST", body: JSON.stringify({
+            client_id: Number(document.getElementById("client-id").value),
+            workout_type: document.getElementById("workout-type").value,
+            duration_min: Number(document.getElementById("duration").value)
+        })});
+        e.target.reset();
+        await loadWorkouts();
+        message.textContent = "Workout saved successfully.";
+    } catch (error) { message.textContent = error.message; }
+});
+Promise.all([loadClients(), loadWorkouts()]).catch(error => {
+    message.textContent = error.message;
+});
+</script>
+</body>
+</html>
