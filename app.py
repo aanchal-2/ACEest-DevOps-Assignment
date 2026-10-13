@@ -1,13 +1,11 @@
 
 import os
+from sqlite3 import IntegrityError
 
 from flask import Flask, jsonify, render_template, request
 
-from sqlite3 import IntegrityError
- 
 import storage
- 
- 
+
 FITNESS_PROGRAMS = {
 
     "Fat Loss": {

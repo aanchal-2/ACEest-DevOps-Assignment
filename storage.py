@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from pathlib import Path
+
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(
     os.environ.get("ACEEST_DB_PATH", str(BASE_DIR / "instance" / "aceest.db"))
