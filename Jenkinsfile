@@ -17,11 +17,22 @@ pipeline {
 
                     .jenkins-venv/bin/python -m pip install -r requirements.txt
 
-                    .jenkins-venv/bin/python -m pip install ruff
-
                     .jenkins-venv/bin/python -m compileall -q app.py storage.py tests
 
                     .jenkins-venv/bin/python -m ruff check app.py storage.py tests
+                '''
+            }
+        }
+
+        stage('Test Coverage') {
+            steps {
+                sh '''
+                    .jenkins-venv/bin/python -m pytest \
+                        --cov=app \
+                        --cov=storage \
+                        --cov-report=xml:coverage.xml \
+                        --cov-report=term-missing \
+                        tests/
                 '''
             }
         }
@@ -73,4 +84,3 @@ pipeline {
         }
     }
 }
-
