@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aceest-blue-green-service
+spec:
+  type: NodePort
+  selector:
+    app: aceest-fitness
+    version: blue
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 31926

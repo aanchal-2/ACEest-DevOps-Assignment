@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-blue
+  labels:
+    app: aceest-fitness
+    version: blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-fitness
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: aceest-fitness
+        version: blue
+    spec:
+      containers:
+        - name: aceest-fitness
+          image: aanchal22/aceest-fitness:v1
+          ports:
+            - containerPort: 5000
