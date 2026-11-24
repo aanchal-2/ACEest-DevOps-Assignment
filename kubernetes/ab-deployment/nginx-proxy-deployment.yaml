@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-ab-proxy
+  labels:
+    app: aceest-ab-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-ab-proxy
+  template:
+    metadata:
+      labels:
+        app: aceest-ab-proxy
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: aceest-ab-nginx-config
